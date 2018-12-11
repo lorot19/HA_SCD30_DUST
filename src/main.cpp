@@ -3,7 +3,7 @@
  * Sensor board is composed from SCD30(CO2, Temperature, Humidity) 
  * and GP2Y1010AU0F (Dust, Smoke) sensors. 
  * For more information, schematics and PCB layout visit:
- * 
+ * https://github.com/lorot19/HA_SCD30_DUST
  *
  * Author: Tomas Lorinc, 2018
  *
