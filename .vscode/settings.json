@@ -1,0 +1,6 @@
+{
+    "terminal.integrated.env.osx": {
+        "PATH": "/Users/tomaslorinc/.platformio/penv/bin:/Users/tomaslorinc/.platformio/penv:/anaconda3/bin:/Users/tomaslorinc/anaconda3/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/share/dotnet:/opt/X11/bin:~/.dotnet/tools:/Library/Frameworks/Mono.framework/Versions/Current/Commands:/Applications/Zerynth Studio.app/Contents/Resources/app.nw/ztc/mac:/Applications/Zerynth Studio.app/Contents/Resources/app.nw/ztc/mac",
+        "PLATFORMIO_CALLER": "vscode"
+    }
+}
