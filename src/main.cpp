@@ -28,7 +28,6 @@
 
 
 #include <Arduino.h>
-
 #include <ESP8266WiFi.h>
 #include <Wire.h>
 #include <PubSubClient.h>
@@ -44,11 +43,11 @@
 #define humidity_topic "sensor/scd30/1/humidity"
 #define temperature_topic "sensor/scd30/1/temperature"
 #define co2_topic "sensor/scd30/1/co2"
-#define in_topic "sensor/scd30/1/fan"
+#define fan_topic "sensor/scd30/1/fan"
 #define dust_topic "sensor/scd30/1/dust"
 #define dust_voltage_topic "sensor/scd30/1/dust_voltage"
 #define NO_DUST_VOLTAGE 0 //No dust voltage is used for more accurate measurment of dust
-#define measure_interval 2 //Measure interval in seconds
+#define measure_interval 50 //Measure interval in seconds
 
 
 /*
@@ -102,29 +101,14 @@ void loop() {
   }
   client.loop();
   
-
   long now = millis();
+
   if (now - lastMsg > measure_interval*1000) {
-    
     lastMsg = now;
-    if (airSensor.dataAvailable())
-    {
-      //getting datas
-      float temp = airSensor.getTemperature();
-      float humidity = airSensor.getHumidity();
-      float co2 = airSensor.getCO2();
-      float dust = getDust();
-      //publishing datas
-      client.publish(temperature_topic, String(temp).c_str(), true);
-      client.publish(humidity_topic, String(humidity).c_str(), true);
-      client.publish(co2_topic, String(co2).c_str(), true);
-      client.publish(dust_topic, String(getDust()).c_str(), true);
-      client.publish(dust_voltage_topic, String(dust_voltage).c_str(), true);
-      //printing datas
-      Serial.printf("%ld \t CO2: %.3f\t TEMPERATURE: %.3f\t HUMIDITY: %.3f\t DUST: %.3f\t DUST_VOLTAGE: %.3f\n",millis(),co2,temp,humidity,dust, dust_voltage);
+    client.publish(fan_topic, "--", false); 
     }
   }
-}
+
 
 
 /*
@@ -144,6 +128,28 @@ void setup_wifi() {
 }
 
 /*
+ * Function which execute measurment from SCD30
+ * After reading, datas are send to broker.
+ */
+void getMeasurment() {
+      if (airSensor.dataAvailable())
+    {
+      //getting datas
+      float temp = airSensor.getTemperature();
+      float humidity = airSensor.getHumidity();
+      float co2 = airSensor.getCO2();
+      float dust = getDust();
+      //publishing datas
+      client.publish(temperature_topic, String(temp).c_str(), false);
+      client.publish(humidity_topic, String(humidity).c_str(), false);
+      client.publish(co2_topic, String(co2).c_str(), false);
+      client.publish(dust_topic, String(getDust()).c_str(), false);
+      client.publish(dust_voltage_topic, String(dust_voltage).c_str(), false);
+      //printing datas
+      Serial.printf("%ld \t CO2: %.3f\t TEMPERATURE: %.3f\t HUMIDITY: %.3f\t DUST: %.3f\t DUST_VOLTAGE: %.3f\n",millis(),co2,temp,humidity,dust, dust_voltage);
+    }
+}
+/*
  * Callback function
  * executed when subsribed msg arrives from MQTT broker
  * used to turn on and off dc fan
@@ -161,6 +167,19 @@ void callback(char* topic, byte* payload, unsigned int length) {
     digitalWrite(FAN_EN, LOW); 
     Serial.println("FAN DISABLED");
   }
+  /* TEMPORARY
+  * not very elegant, but functional. 
+  * measurment behaviour will be improved and delay() removed.
+  */
+  else if (data == "--") {
+    digitalWrite(FAN_EN, HIGH); 
+    Serial.println("FAN ENABLED");
+    Serial.println("BUSY FOR 10sec");
+    delay(10000);
+    getMeasurment();
+    digitalWrite(FAN_EN, LOW); 
+    Serial.println("FAN DISABLED");
+  }
 
 }
 
@@ -173,7 +192,7 @@ void reconnect() {
     Serial.print("Attempting MQTT connection...");
     if (client.connect("ESP8266Client")) {
       Serial.println("\nCONNECTED");
-      client.subscribe(in_topic);
+      client.subscribe(fan_topic);
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
